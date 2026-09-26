@@ -1,0 +1,3 @@
+{"question_id": "ex-1", "benchmark": "gsm8k", "domain": "math", "query": "What is 1+1?", "iteration": 1, "rollout_id": 0, "response": "Reasoning. \\boxed{2}", "final_answer": "2", "correctness": 1}
+{"question_id": "ex-1", "benchmark": "gsm8k", "domain": "math", "query": "What is 1+1?", "iteration": 2, "rollout_id": 0, "response": "Reasoning. \\boxed{3}", "final_answer": "3", "correctness": 0}
+{"question_id": "ex-1", "benchmark": "gsm8k", "domain": "math", "query": "What is 1+1?", "iteration": 3, "rollout_id": 0, "response": "Reasoning. \\boxed{2}", "final_answer": "2", "correctness": 1}

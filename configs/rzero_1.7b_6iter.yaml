@@ -1,0 +1,35 @@
+trajectory: rzero_1.7b_6iter
+n_iterations: 6
+# Later of the two central checkpoints (Iter4). Pass it as the reference encoder.
+reference_iteration: 4
+layer_index: 18
+hidden_size: 2048
+num_hidden_layers: 28
+max_length: 8192
+dtype: bfloat16
+batch_size: 8
+system_prompt: "Please reason step by step, and put your final answer within \\boxed{}."
+domains:
+  math:
+    benchmarks: [math, gsm8k, amc, minerva, olympiad, aime2024, aime2025]
+  general:
+    benchmarks: [bbeh, mmlupro, supergpqa]
+  code:
+    benchmarks: [humaneval, mbpp, bigcodebench, livecodebench]
+mean32_benchmarks: [amc, aime2024, aime2025]
+seeds: [0, 1, 2]
+n_outer: 5
+n_inner: 5
+alphas: [0.25, 0.50, 0.75]
+margins: [0.0, 0.05, 0.10]
+svd_components: 128
+tfidf_max_features: 30000
+tfidf_ngram: [1, 2]
+lr_max_iter: 400
+n_boot: 10000
+bootstrap_seed: 20260912
+generation:
+  temperature: 0.0
+  top_p: 1.0
+  max_new_tokens: 4096
+  n: 1
