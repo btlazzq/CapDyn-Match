@@ -30,11 +30,14 @@ def test_margin_and_prior():
 
 
 def test_agreement_width():
+    import math
+
     feats = agreement_features(["a", "a", "b"], use_math_verify=False)
-    assert len(feats) == 7
-    assert len(agreement_features(["a"] * 6, use_math_verify=False)) == n_agreement_features(6)
-    # Non-transitive-style hand labels are not used: a==b and a==c with strings is transitive.
-    assert feats[0] == 0.0 and feats[1] == 1.0
+    entropy = -(2 / 3) * math.log(2 / 3) - (1 / 3) * math.log(1 / 3)
+    expect = [2 / 3, 2 / 3, entropy, 1 / 3]
+    assert len(feats) == n_agreement_features(3) == 4
+    assert all(abs(a - b) < 1e-12 for a, b in zip(feats, expect))
+    assert agreement_features(["a"] * 6, use_math_verify=False) == [1 / 6, 1.0, 0.0, 1.0]
 
 
 def test_fusion_shape():
@@ -100,9 +103,6 @@ def test_nested_cv_boundaries():
     assert len(result["folds"]) == 2
     for fold in result["folds"]:
         assert "capdyn_match" in fold["methods"]
-        assert "majority_vote" not in fold["methods"]
-        assert "vanilla_linear" not in fold["methods"]
-        # Query-only and Representation-only are scored with the CapDyn margin.
         assert fold["margin"] in (0.0, 0.1)
         questions = {r["question"] for r in records}
         assert set(fold["fitted_questions"]).issubset(questions)

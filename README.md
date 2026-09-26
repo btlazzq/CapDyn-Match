@@ -6,6 +6,8 @@ CapDyn-Match performs response-level historical capability recovery for self-evo
 
 The same selector is used for a three-iteration trajectory and a six-iteration trajectory. Agent0, R-Zero 4B, and R-Zero 1.7B differ only by config: candidate count, reference encoder, and hidden layer.
 
+CapAgree `g(Y)` is output diversity, modal-answer share, output entropy, and average pairwise consistency.
+
 ## Repository Structure
 
 - `capdyn/` implements the method: frozen query-response representations, CapAgree features, the shared correctness probe, score fusion, Train-Prior, the margin gate, and the query-only router.
@@ -43,7 +45,7 @@ Required fields:
 
 Optional: `rollout_id` (default 0), `domain`, `gold`, `chat_mode`.
 
-Rows that share `benchmark` and `question_id` stay in the same fold. For mean@32 benchmarks (`amc`, `aime2024`, `aime2025`), all 32 rollouts use the same question id and different `rollout_id` values. CapDyn-Match averages those rollouts inside the question. The capability-dynamics script instead keeps the first stored row for each question, which is how those tables were built.
+Rows that share `benchmark` and `question_id` stay in the same fold. For mean@32 benchmarks (`amc`, `aime2024`, `aime2025`), all 32 rollouts use the same question id and different `rollout_id` values. CapDyn-Match averages those rollouts inside the question.
 
 `chat_mode` is `math_system`, `user_only`, `evalplus_prefill`, or `lcb_codeqwen`. Code and general benchmarks should be marked so agreement does not call the math equality checker. The loaders do that for the benchmark names listed in the configs.
 
@@ -160,12 +162,10 @@ python scripts/run_six_iteration.py \
 
 ## Upstream Agent0 and R-Zero
 
-Official training source is included as a snapshot of the public GitHub default branch. Git history is not included.
+- Agent0 `f775b5101e62fe92976831adf4a21a38fcc0a767`
+- R-Zero `5699329d018d79535b7910abdedf5a6eebf355fd`
 
-- `third_party/Agent0` from `https://github.com/aiming-lab/Agent0`
-- `third_party/R-Zero` from `https://github.com/Chengsong-Huang/R-Zero`
-
-Package version stamps in those trees are cleared (`__version__` and the version files). Dependency checks that the upstream code uses to select a library API are unchanged. These directories are the upstream projects, not the CapDyn-Match selector.
+Dependency pins are in `third_party/`.
 
 ## Notes
 

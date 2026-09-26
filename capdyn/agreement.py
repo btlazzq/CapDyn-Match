@@ -1,24 +1,16 @@
-"""Answer normalization and cross-iteration agreement features.
+"""Answer normalization and CapAgree features g(Y).
 
-One feature layout is used for every trajectory and every candidate count K >= 2.
-
-Layout (length K + C(K, 2) + 1):
-  - one-hot of the number of distinct answers, where distinctness is the
-    number of connected components under answer equality (1 .. K);
-  - pairwise equality in index order (i, j) with i < j;
-  - majority component size divided by K.
-
-For K = 3 the length is 7. Pairwise columns are (0,1), (0,2), (1,2).
-The earlier three-iteration runner emitted pairs in the order (0,1), (1,2), (0,2)
-and assigned a unique-count of 2 whenever equality was not a single transitive
-chain through pairs (0,1) and (1,2). A linear probe is invariant to that column
-permutation when equality is transitive. It is not invariant when equality is
-non-transitive. This module follows the single N-candidate definition above.
+g(Y) has four values, in this order, for every K >= 2:
+output diversity, modal-answer share, output entropy, average pairwise consistency.
+Distinct answers are connected components under answer equality.
+Entropy is the natural-log Shannon entropy of that component distribution.
 """
 
 from __future__ import annotations
 
+import math
 import re
+from collections import Counter
 from typing import Optional, Sequence
 
 NO_BOXED = "<NO_BOXED>"
@@ -66,11 +58,6 @@ def _looks_like_code_or_long(text: str) -> bool:
 
 
 def answers_equal(a: str, b: str, use_math_verify: Optional[bool] = None) -> bool:
-    """Equality on normalized answers.
-
-    Math may use math_verify. Knowledge and code pass use_math_verify=False
-    and compare strings only. Correctness labels are never consulted.
-    """
     if a == b:
         return True
     if a == NO_BOXED or b == NO_BOXED:
@@ -101,15 +88,9 @@ def agreement_features(
     answers: Sequence[str],
     use_math_verify: Optional[bool] = None,
 ) -> list[float]:
-    """Cross-iteration agreement vector. See module docstring."""
     k = len(answers)
     if k < 2:
         raise ValueError("need at least 2 historical answers")
-    eq = [[0.0] * k for _ in range(k)]
-    for i in range(k):
-        for j in range(i + 1, k):
-            e = float(answers_equal(answers[i], answers[j], use_math_verify=use_math_verify))
-            eq[i][j] = eq[j][i] = e
     parent = list(range(k))
 
     def find(x: int) -> int:
@@ -123,19 +104,23 @@ def agreement_features(
         if ra != rb:
             parent[rb] = ra
 
+    pair_hits = 0
+    pair_total = 0
     for i in range(k):
         for j in range(i + 1, k):
-            if eq[i][j]:
+            pair_total += 1
+            if answers_equal(answers[i], answers[j], use_math_verify=use_math_verify):
+                pair_hits += 1
                 union(i, j)
-    from collections import Counter
-
-    sizes = Counter(find(i) for i in range(k))
-    unique_count = len(sizes)
-    majority_count = max(sizes.values()) if sizes else 0
-    feats = [float(unique_count == u) for u in range(1, k + 1)]
-    feats.extend(eq[i][j] for i in range(k) for j in range(i + 1, k))
-    feats.append(majority_count / float(k))
-    return feats
+    counts = list(Counter(find(i) for i in range(k)).values())
+    diversity = len(counts) / float(k)
+    modal_share = max(counts) / float(k)
+    entropy = 0.0
+    for count in counts:
+        p = count / float(k)
+        entropy -= p * math.log(p)
+    pairwise = pair_hits / float(pair_total)
+    return [diversity, modal_share, entropy, pairwise]
 
 
 def agreement_matrix(records: list[dict], answer_key: str = "answers") -> "object":
@@ -153,4 +138,6 @@ def agreement_matrix(records: list[dict], answer_key: str = "answers") -> "objec
 
 
 def n_agreement_features(k: int) -> int:
-    return k + k * (k - 1) // 2 + 1
+    if k < 2:
+        raise ValueError("need at least 2 historical answers")
+    return 4
